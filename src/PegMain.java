@@ -2,6 +2,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Scanner;
 import java.util.Stack;
 
@@ -25,7 +27,7 @@ public class PegMain {
 	private static int numExpanded = 0;
 	private static final int maxNumExpanded = 100000;
 	private static int numStatesPrinted = 0;
-	private static final int maxNumStatesPrinted = 5;
+	private static final int maxNumStatesPrinted = 50;
 	private static long startTime;
 	private static long executionTime = 0;
 	
@@ -99,6 +101,30 @@ public class PegMain {
 		
 		// Reset global variables for next algorithm
 		reset(); 
+		
+		System.out.println("");
+		System.out.println("Press ENTER button to continue... NEXT ALGORITHM: BREADTH FIRST GRAPH SEARCH");
+		scan.nextLine();
+		startTime = System.currentTimeMillis();
+		solution = BFGS();
+		executionTime = System.currentTimeMillis() - startTime;
+		System.out.println("");
+		//report b)
+		if (solution != null) {
+			System.out.println("SOLUTION FOUND!");
+			System.out.println("SEQUENCE OF TILES ID: " + solution.getIdSequence());
+			System.out.println("NUMBER OF MOVES: " + solution.getNumberOfMoves());
+		} else {
+			System.out.println("THE SOLUTION WAS NOT FOUND: MORE THAN " + maxNumExpanded + " NODES EXPANDED");
+		}
+		//report c)
+		System.out.println("NODES EXPANDED: " + numExpanded);
+		//report d)
+		System.out.println("EXECUTION TIME: " + executionTime + "ms");
+		
+		// Reset global variables for next algorithm
+		reset(); 
+		
 		/*
 		//A* algorithm
 		System.out.println("");
@@ -382,6 +408,62 @@ public class PegMain {
 		return null;
 	}
 	
+	private static Solution BFGS() {
+		
+		// Initialize an empty set to contain closed states
+		HashSet<Board> closed = new HashSet<>(maxNumExpanded);
+		
+		// Maintain a queue (FIFO queue). This will replace the global fringe for this search.
+		Queue<Node> queue = new LinkedList<Node>();
+		
+		// Add the first node to search
+		queue.add(new Node(new Board()));
+		
+		// Begin loop: if the stack is empty AND max nodes have been reached, terminate
+		while (!queue.isEmpty() && numExpanded < maxNumExpanded) {
+			
+			// Poll off the top of the queue
+			Node node = queue.poll();
+			numExpanded++;
+			// Goal test!
+			if (goalTest(node)) {
+				return new Solution(node);
+			} else {
+				
+				if (numStatesPrinted < maxNumStatesPrinted) {
+					numStatesPrinted++;
+					System.out.println("STATE OF NODE EXPANDED " + numStatesPrinted);
+					//if (node.getParent()!=null) node.getParent().getState().printBoard();
+					//System.out.println("------------------------------");
+					node.getState().printBoard();
+					if (numStatesPrinted == maxNumStatesPrinted) 
+						System.out.println("Loading...");
+				}
+			
+				Board temp = node.getState();
+				if (!closed.contains(temp)) {
+					closed.add(temp);
+					ArrayList<Node> toAdd = expand(node);
+					Collections.sort(toAdd, new Comparator<Node>() {
+					    @Override
+					    public int compare(Node n1, Node n2) {
+					        return n2.getLastMovedNumber() - n1.getLastMovedNumber();
+					    }
+					});
+					queue.addAll(toAdd);
+					/*if (node.getParent()==null) {
+						queue.poll();
+						queue.poll();
+						queue.poll();
+						
+					}*/
+				}
+				
+			}
+		}	// End while
+		queue.poll().getState().printBoard();
+		return null;
+	}
 	
 	//Josh
 	//Here we take a look at the almighty A* algorithm
