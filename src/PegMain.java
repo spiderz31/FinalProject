@@ -27,7 +27,7 @@ public class PegMain {
 	private static int numExpanded = 0;
 	private static final int maxNumExpanded = 100000;
 	private static int numStatesPrinted = 0;
-	private static final int maxNumStatesPrinted = 50;
+	private static final int maxNumStatesPrinted = 5;
 	private static long startTime;
 	private static long executionTime = 0;
 	
@@ -164,8 +164,19 @@ public class PegMain {
 	 * returns true if input equals goal state
 	 */
 	static boolean goalTest(Node node) {
-		return node.getPathCost() == 31;
-		//return Arrays.deepEquals(problem, goal);
+		int pegs = 0;
+		for(int row = 0; row < 7; row++) {
+			for(int col = 0; col < 7; col++) {
+				if (node.getState().getBoard()[row][col] == 'p') {
+					pegs++;
+				}
+				if (pegs > 1) {//Change to try different goals
+					return false;
+				}
+			}
+		}
+		return true;
+		//return node.getPathCost() == 31;
 	}
 	
 	
@@ -179,7 +190,14 @@ public class PegMain {
 		for (int[] holeLocation :holeLocations) {
 			// 0 is up, 1 is left, 2 is down, 3 is right
 			for (int i = 0; i < 4; i++) {
-				Node successor = getSuccessor(node, i, holeLocation);
+				int k = i;
+				if (i==1) {
+					k = 2;
+				}
+				if (i==2) {
+					k = 1;
+				}
+				Node successor = getSuccessor(node, k, holeLocation);
 				if (successor != null) {
 					successors.add(successor);
 					/*if (numExpanded < 10) {
@@ -213,9 +231,9 @@ public class PegMain {
 					
 					newBoard = board.cloneBoard();
 					
-					newBoard.getBoard()[holeRow+2][holeCol].setValue('O');
-					newBoard.getBoard()[holeRow+1][holeCol].setValue('O');
-					newBoard.getBoard()[holeRow][holeCol].setValue('p');
+					newBoard.getBoard()[holeRow+2][holeCol] = 'O';
+					newBoard.getBoard()[holeRow+1][holeCol] = 'O';
+					newBoard.getBoard()[holeRow][holeCol] = 'p';
 					
 				}
 				else {
@@ -227,9 +245,9 @@ public class PegMain {
 					
 					newBoard = board.cloneBoard();
 					
-					newBoard.getBoard()[holeRow][holeCol+2].setValue('O');
-					newBoard.getBoard()[holeRow][holeCol+1].setValue('O');
-					newBoard.getBoard()[holeRow][holeCol].setValue('p');
+					newBoard.getBoard()[holeRow][holeCol+2] = 'O';
+					newBoard.getBoard()[holeRow][holeCol+1] = 'O';
+					newBoard.getBoard()[holeRow][holeCol] = 'p';
 					
 				}
 				else {
@@ -241,9 +259,9 @@ public class PegMain {
 					
 					newBoard = board.cloneBoard();
 					
-					newBoard.getBoard()[holeRow-2][holeCol].setValue('O');
-					newBoard.getBoard()[holeRow-1][holeCol].setValue('O');
-					newBoard.getBoard()[holeRow][holeCol].setValue('p');
+					newBoard.getBoard()[holeRow-2][holeCol] = 'O';
+					newBoard.getBoard()[holeRow-1][holeCol] = 'O';
+					newBoard.getBoard()[holeRow][holeCol] = 'p';
 					
 				}
 				else {
@@ -255,9 +273,9 @@ public class PegMain {
 					
 					newBoard = board.cloneBoard();
 					
-					newBoard.getBoard()[holeRow][holeCol-2].setValue('O');
-					newBoard.getBoard()[holeRow][holeCol-1].setValue('O');
-					newBoard.getBoard()[holeRow][holeCol].setValue('p');
+					newBoard.getBoard()[holeRow][holeCol-2] = 'O';
+					newBoard.getBoard()[holeRow][holeCol-1] = 'O';
+					newBoard.getBoard()[holeRow][holeCol] = 'p';
 					
 				}
 				else {
@@ -378,6 +396,7 @@ public class PegMain {
 			numExpanded++;
 			// Goal test!
 			if (goalTest(node)) {
+				stack.pop().getState().printBoard();
 				return new Solution(node);
 			} else {
 				
@@ -385,20 +404,25 @@ public class PegMain {
 					numStatesPrinted++;
 					System.out.println("STATE OF NODE EXPANDED " + numStatesPrinted);
 					node.getState().printBoard();
+					for (Board c:closed) {
+						System.out.println("-----------------");
+						c.printBoard();
+					}
+					System.out.println("closed size: " + closed.size());
 					if (numStatesPrinted == maxNumStatesPrinted) 
 						System.out.println("Loading...");
 				}
-			
+				//System.out.println(node.getPathCost());
 				Board temp = node.getState();
-				if (!closed.contains(temp)) {
+				if (!existIdentical(closed, temp)) {
 					closed.add(temp);
 					ArrayList<Node> toAdd = expand(node);
-					Collections.sort(toAdd, new Comparator<Node>() {
+					/*Collections.sort(toAdd, new Comparator<Node>() {
 					    @Override
 					    public int compare(Node n1, Node n2) {
 					        return n2.getLastMovedNumber() - n1.getLastMovedNumber();
 					    }
-					});
+					});*/
 					stack.addAll(toAdd);
 				}
 				
@@ -408,6 +432,63 @@ public class PegMain {
 		return null;
 	}
 	
+	//search if contains the same board or symmetrical board
+	private static boolean existIdentical(HashSet<Board> closed, Board b) {
+		boolean evalNextBoard = false;
+		boolean wasIdentical;
+		for (Board closedB:closed) {
+			for (int rotation = 0; rotation < 4; rotation++) { // 1 same board, 3 rotations
+				for (int reflection = 0; reflection < 3; reflection++) { // 1 same board, 2 reflections
+					wasIdentical = true;
+					for(int row = 0; row < 7; row++) {
+						for(int col = 0; col < 7; col++) {
+							char bVal = b.getBoard()[row][col];
+							
+							int cValRow = row;
+							int cValCol = col;
+							
+							if (rotation == 1) {
+								cValRow = col;
+								cValCol = 6-row;
+							}
+							else if (rotation == 2) {
+								cValRow = 6-row;
+								cValCol = 6-col;
+							}
+							else if (rotation == 3) {
+								cValRow = 6-col;
+								cValCol = row;
+							}
+
+							if (reflection == 1) {
+								cValRow = 6-cValRow;
+							}
+							else if (reflection == 2) {
+								cValCol = 6-cValCol;
+							}
+							
+							char cVal = closedB.getBoard()[cValRow][cValCol];
+							
+							if (bVal != cVal) {
+								evalNextBoard = true;
+								break;
+							}
+						}
+						if (evalNextBoard) {
+							evalNextBoard = false;
+							wasIdentical = false;
+							break;
+						}
+					}
+					if (wasIdentical) {
+						return true;
+					}						
+				}
+			}
+		}
+		return false;
+	}
+
 	private static Solution BFGS() {
 		
 		// Initialize an empty set to contain closed states
@@ -419,6 +500,8 @@ public class PegMain {
 		// Add the first node to search
 		queue.add(new Node(new Board()));
 		
+		int pruned = 0;
+		int lastDepth = 0;
 		// Begin loop: if the stack is empty AND max nodes have been reached, terminate
 		while (!queue.isEmpty() && numExpanded < maxNumExpanded) {
 			
@@ -436,13 +519,29 @@ public class PegMain {
 					//if (node.getParent()!=null) node.getParent().getState().printBoard();
 					//System.out.println("------------------------------");
 					node.getState().printBoard();
+					System.out.println("closed size: " + closed.size());
 					if (numStatesPrinted == maxNumStatesPrinted) 
 						System.out.println("Loading...");
 				}
-			
+				if (node.getPathCost() != lastDepth) {
+					System.out.println("new depth" + node.getPathCost());
+					System.out.println("pruned" + pruned);
+					System.out.println("time" + (System.currentTimeMillis() - startTime));
+					pruned = 0;
+					lastDepth = node.getPathCost();
+				}
+				//System.out.println(node.getPathCost());
 				Board temp = node.getState();
-				if (!closed.contains(temp)) {
+				if (!existIdentical(closed, temp)) {
+				//if (!closed.contains(temp)) {
 					closed.add(temp);
+					/*Board r1 = temp.rotate();
+					closed.add(r1);
+					Board r2 = r1.rotate();
+					closed.add(r2);
+					Board r3 = r2.rotate();
+					closed.add(r3);
+					*/
 					ArrayList<Node> toAdd = expand(node);
 					Collections.sort(toAdd, new Comparator<Node>() {
 					    @Override
@@ -451,17 +550,15 @@ public class PegMain {
 					    }
 					});
 					queue.addAll(toAdd);
-					/*if (node.getParent()==null) {
-						queue.poll();
-						queue.poll();
-						queue.poll();
-						
-					}*/
 				}
-				
+				else {
+					pruned++;
+					if (numStatesPrinted < maxNumStatesPrinted) System.out.println("not expanded");
+				}
 			}
 		}	// End while
 		queue.poll().getState().printBoard();
+		System.out.println("closed size: " + closed.size());
 		return null;
 	}
 	

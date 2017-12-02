@@ -1,6 +1,6 @@
 
 public class Space {
-
+/*
 	public char value;
 	private boolean hasPeg = false;
 	private boolean isEdge = false;
@@ -35,5 +35,5 @@ public class Space {
 	public void removePeg() {
 		this.hasPeg = false;
 		this.value = 'O';
-	}
+	}*/
 }

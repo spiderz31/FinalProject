@@ -3,7 +3,7 @@ import java.util.Arrays;
 
 public class Board {
 	
-	private Space[][] board = new Space[7][7];
+	private char[][] board = new char[7][7];
 	
 	public Board(boolean emptyBoard) {
 		if (!emptyBoard) {
@@ -21,17 +21,17 @@ public class Board {
 				//remember, row/col
 				if((j == 0 || j == 1 || j == 5 || j == 6) && (i == 0 || i == 1 || i == 5 || i == 6)) {
 					//set as a #
-					board[j][i] = new Space('#');
+					board[j][i] = '#';
 				}
 							
 				else {
 					//set as a peg p
-					board[j][i] = new Space('p');
+					board[j][i] = 'p';
 				}
 			}
 		}
 		//pull the peg from the center
-		board[3][3].removePeg();
+		board[3][3] = 'O';
 	}
 	
 	public void printBoard() {
@@ -39,7 +39,7 @@ public class Board {
 			
 			for(int j = 0; j < 7; j++) {
 			
-				System.out.print(board[j][i].getValue()+" ");
+				System.out.print(board[j][i] + " ");
 				
 			}
 			System.out.println();
@@ -47,7 +47,7 @@ public class Board {
 		}
 	}
 	
-	public void setBoard(Space[][] board) {
+	public void setBoard(char[][] board) {
 		this.board = board;
 	}
 	
@@ -78,7 +78,7 @@ public class Board {
 		return true;
 	}
 	
-	public Space[][] getBoard() {
+	public char[][] getBoard() {
 		return board;
 	}
 	/*
@@ -119,7 +119,7 @@ public class Board {
 		ArrayList<int[]> holeLocations = new ArrayList<int[]>();
 		for(int row = 0; row < 7; row++) {	
 			for(int col = 0; col < 7; col++) {
-				if (board[row][col].getValue()=='O') {
+				if (board[row][col] == 'O') {
 					int[] hLoc = new int[2];
 					hLoc[0] = row;
 					hLoc[1] = col;
@@ -134,8 +134,7 @@ public class Board {
 		if (row < 0 || row > 6 || col < 0 || col > 6) {
 			return false;
 		}
-		Space value = board[row][col];
-		if (value.getValue() == 'p') {
+		if (board[row][col] == 'p') {
 			return true;
 		}
 		return false;
@@ -146,10 +145,21 @@ public class Board {
 		//clonedBoard.setBoard(board.clone());
 		for(int row = 0; row < 7; row++) {	
 			for(int col = 0; col < 7; col++) {
-				clonedBoard.getBoard()[row][col] = new Space(board[row][col].getValue());
+				clonedBoard.getBoard()[row][col] = board[row][col];
 			}
 		}
 		return clonedBoard;
 	}	
+	
+	
+	public Board rotate() {
+		Board rotatedBoard = new Board(true);
+		for(int row = 0; row < 7; row++) {	
+			for(int col = 0; col < 7; col++) {
+				rotatedBoard.getBoard()[row][col] = board[col][7-1-row];
+			}
+		}
+		return rotatedBoard;
+	}
 	
 }
